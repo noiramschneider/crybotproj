@@ -1,0 +1,23 @@
+
+
+textarea {
+	background-color: transparent;
+  width: 1200px;
+  height: 270px;
+ position: absolute;
+  top: 625px;
+  left: 40px;
+  font-size: 30px;
+  color: white;
+
+}
+::placeholder {
+  color: white;
+  opacity: 1; /* Firefox */
+}
+
+textarea:focus{
+	outline: none !important;
+    border-color: #ffebfe;
+    box-shadow: 0 0 10px #ffebfe;
+}
