@@ -4,20 +4,29 @@ const { exec } = require('child_process');
 const mcpadc = require('mcp-spi-adc');
 const Gpio = require('onoff').Gpio;
 const app = express();
+const bodyParser = require('body-parser');
 
-// Plant watering logic (from waterplant.js)
+app.use(bodyParser.json()); // To parse JSON request bodies
+
+// Global tearTotal variable (updated by frontend)
+let tearTotal = 0;
+
+// Relay and watering system setup
 const pumpRelay = new Gpio(17, 'high');
 const completelyWet = 400;
 const completelyDry = 880;
 
 // Serve the p5.js interface
-app.use(express.static(path.join(__dirname, 'public'))); // Make sure your p5.js sketch is in a 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.listen(3000, () => {
-  console.log('Interface running at http://localhost:3000');
+// API route to update tearTotal from frontend
+app.post('/update-tear-total', (req, res) => {
+  tearTotal = req.body.tearTotal; // Update the global tearTotal
+  console.log(`Tear total updated: ${tearTotal} mL`);
+  res.sendStatus(200); // Respond with success
 });
 
-// Plant watering logic here
+// Watering logic
 function getSensorReadings(sensor) {
   return new Promise((resolve, reject) => {
     sensor.read((readError, reading) => {
@@ -71,16 +80,22 @@ function waterThePlant() {
   return new Promise(async (resolve, reject) => {
     const moistureLevel = await getMoistureLevel();
     console.log(`Soil dryness: ${moistureLevel.soilDrynessPercentage}%`);
-    const needsWater = shouldWater(moistureLevel.soilDrynessPercentage);
+console.log("tearTotal "+tearTotal);
 
-    if (needsWater) {
+    if (moistureLevel.soilDrynessPercentage > 200 && tearTotal >= 8) {
       pumpRelay.writeSync(0); // Start the pump
       console.log('Watering the plant...');
       setTimeout(() => {
         stopWateringPlant();
+        
+                // Deduct 8 mL from tearTotal after watering
+        tearTotal -= 8;
+        if (tearTotal < 0) tearTotal = 0; // Prevent negative tearTotal
+
+        console.log(`Tear total after watering: ${tearTotal} mL`);
       }, 3000); // Water for 3 seconds
     } else {
-      console.log('Conditions not met for watering.');
+      console.log('Not enough tears or soil is moist enough.');
     }
 
     resolve();
@@ -96,3 +111,8 @@ function stopWateringPlant() {
 setInterval(() => {
   waterThePlant();
 }, 60000);
+
+// Start server
+app.listen(3000, () => {
+  console.log('Interface running at http://localhost:3000');
+});

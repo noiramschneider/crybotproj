@@ -56,7 +56,9 @@ function setup() {
   let savedTearTotal = localStorage.getItem('tearTotal');
   if (savedTearTotal !== null) {
   tearTotal = parseFloat(savedTearTotal);}
+console.log("tearTotal "+tearTotal);
 
+  
   function typing() {
     var textinput = txt.value();
     var words = textinput.split(/\W/);
@@ -91,6 +93,27 @@ function setup() {
   }
 }
 
+// Function to update the backend with the current tearTotal
+function updateTearTotalBackend() {
+  fetch('/update-tear-total', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ tearTotal: tearTotal }), // Send tearTotal as JSON
+  })
+    .then((response) => {
+      if (response.ok) {
+        console.log('Tear total sent to backend');
+      } else {
+        console.error('Failed to send tear total to backend');
+      }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+}
+
 function keyPressed() {
   var txt = select('#txt');
 
@@ -115,8 +138,11 @@ function keyPressed() {
       tearTotal += tearEstimate;
       tearTotalChanged = true; // Set the flag to true
       lastTearUpdateTime = millis(); // Update the last update time
+            localStorage.setItem('tearTotal', tearTotal); // Save tearTotal to localStorage
+      updateTearTotalBackend(); // Send tearTotal to backend
       // Save updated tearTotal to localStorage
       localStorage.setItem('tearTotal', tearTotal);
+      
     }
     tearEstimate = 0;
     actualScore = 0;
