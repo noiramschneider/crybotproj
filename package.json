@@ -3,6 +3,7 @@
     "cjs": "^0.0.11",
     "express": "^4.21.1",
     "mcp-spi-adc": "^3.2.0",
+    "node-schedule": "^2.1.1",
     "onoff": "^6.0.3"
   }
 }

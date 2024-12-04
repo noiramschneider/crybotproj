@@ -19,40 +19,6 @@ var lastTearUpdateTime = 0;
 var lastInteractionTime = 0; // To track the last time user interacted
 var callForHelpTriggered = false; // To track if we're in call for help mode
 var txt;
-var currentDryness = 0; // Store the fetched dryness value
-
-
-function fetchTearTotalFromBackend() {
-  fetch('/get-tear-total')
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.tearTotal !== tearTotal) {
-        tearTotal = data.tearTotal; // Update the tearTotal in the frontend
-        tearTotalChanged = true; // Trigger the highlighting effect
-        lastTearUpdateTime = millis(); // Update the time for the blinking effect
-        console.log(`TearTotal synchronized: ${tearTotal} mL`);
-      }
-    })
-    .catch((error) => {
-      console.error('Error fetching tearTotal from backend:', error);
-    });
-}
-
-function fetchDrynessFromBackend() {
-  fetch('/get-moisture')
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.dryness !== undefined) {
-        console.log(`Soil dryness fetched: ${data.dryness}%`); // Debug log
-        displaySoilDryness(data.dryness); // Update the dryness value
-      } else {
-        console.log('Received undefined dryness value');
-      }
-    })
-    .catch((error) => {
-      console.error('Error fetching soil dryness:', error);
-    });
-}
 
 function preload() {
   afinn = loadJSON('afinn111.json');
@@ -97,16 +63,8 @@ function setup() {
 //to remember the last tearTotal after a page update
   let savedTearTotal = localStorage.getItem('tearTotal');
   if (savedTearTotal !== null) {
-  tearTotal = parseFloat(savedTearTotal);
-
-  fetchDrynessFromBackend(); // Fetch dryness
-  fetchTearTotalFromBackend(); // Fetch tearTotal
-
-  setInterval(fetchDrynessFromBackend, 5000); // Fetch every 5 seconds
-  setInterval(fetchTearTotalFromBackend, 5000); // Fetch tearTotal every 5 seconds
-
-}
-
+  tearTotal = parseFloat(savedTearTotal);}
+console.log("tearTotal "+tearTotal);
 
   
   function typing() {
@@ -183,22 +141,21 @@ function keyPressed() {
     document.getElementById('txt').style.display = "block"; // Show input box
   }
 
-if (keyCode === 16) { // Shift key is pressed
+  if (keyCode === 16) { // Shift key is pressed
     if (tearEstimate > 0) { // Only increase if tearEstimate is greater than 0
       tearTotal += tearEstimate;
       tearTotalChanged = true; // Set the flag to true
       lastTearUpdateTime = millis(); // Update the last update time
-      localStorage.setItem('tearTotal', tearTotal); // Save tearTotal to localStorage
+            localStorage.setItem('tearTotal', tearTotal); // Save tearTotal to localStorage
       updateTearTotalBackend(); // Send tearTotal to backend
-
-      tearEstimate = 0;
-      actualScore = 0;
-      txt.value('');
-
-      // Immediately trigger watering check after sending text
-      triggerWateringCheck();
+      // Save updated tearTotal to localStorage
+      localStorage.setItem('tearTotal', tearTotal);
+      
     }
-  }
+    tearEstimate = 0;
+    actualScore = 0;
+    txt.value('');
+  } 
 
   if (keyCode === 13) { // Enter key is pressed
     if (imThirsty) {
@@ -236,7 +193,6 @@ function chooseCanvas() {
   // Check if tearTotal has reached 8ml or more, if so, exit help mode
   if (tearTotal >= 8) {
     helpMode = false; // Exit help mode once tearTotal reaches 8 mL or more
-    fetchTearTotalFromBackend();
        displayRegularScreen(); // Show regular screen
     document.getElementById('txt').style.display = "block"; // Show input box
   }
@@ -314,12 +270,6 @@ function displayCallforHelp() {
   text('PRESS ENTER TO HELP', 512, 900);
 }
 
-
-
-function displaySoilDryness(dryness) {
-  currentDryness = dryness; // Store the updated dryness value
-}
-
 function displayRegularScreen() {
   txt.show();
   clear();
@@ -358,7 +308,7 @@ function displayRegularScreen() {
 
   fill(255);
   textSize(22);
-  text(`Soil Dryness: ${currentDryness}%`, 650, 465); // Use the fetched value
+  text('Soil Dryness__40%__', 650, 465);
 
   fill(255);
   textSize(30);
@@ -424,9 +374,6 @@ function displayHelpmodescreen() {
   }
 }
 
-
-
-
 function highlightText() {
   if (scoreChanged && millis() - lastScoreUpdateTime <= changeColorDuration && actualScore!=0) {
     // Blinking effect: Toggle visibility every 250 milliseconds
@@ -454,28 +401,3 @@ function highlightTearTotal() {
     tearTotalChanged = false; // Reset the flag
   }
 }
-
-function triggerWateringCheck() {
-  fetch('/check-and-water', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-    .then((response) => {
-      if (response.ok) {
-        console.log('Watering check triggered successfully.');
-      } else {
-        console.error('Failed to trigger watering check.');
-      }
-    })
-    .catch((error) => {
-      console.error('Error triggering watering check:', error);
-    });
-}
-
-
-
-
-
-
