@@ -42,17 +42,19 @@ function fetchDrynessFromBackend() {
   fetch('/get-moisture')
     .then((response) => response.json())
     .then((data) => {
-      if (data.dryness !== undefined) {
-        console.log(`Soil dryness fetched: ${data.dryness}%`); // Debug log
+      if (data.dryness !== undefined && !isNaN(data.dryness)) {
+        console.log(`Soil dryness fetched: ${data.dryness}%`);
         displaySoilDryness(data.dryness); // Update the dryness value
       } else {
-        console.log('Received undefined dryness value');
+        console.error('Invalid or missing dryness value');
       }
     })
     .catch((error) => {
       console.error('Error fetching soil dryness:', error);
     });
 }
+
+
 
 function preload() {
   afinn = loadJSON('afinn111.json');
@@ -91,8 +93,9 @@ function setup() {
     console.error("Text area with id txt not available to focus");
   }
 }
-    //initialize the last interaction time to the current time
-  lastInteractionTime = millis();
+// Initialize the last interaction time to the current time
+lastInteractionTime = Date.now();
+
 
 //to remember the last tearTotal after a page update
   let savedTearTotal = localStorage.getItem('tearTotal');
@@ -317,8 +320,11 @@ function displayCallforHelp() {
 
 
 function displaySoilDryness(dryness) {
-  currentDryness = dryness; // Store the updated dryness value
+  currentDryness = Math.round(dryness); // Round to the nearest integer
+  console.log("Current Dryness Value: " + currentDryness); // Log the updated value
 }
+
+
 
 function displayRegularScreen() {
   txt.show();
@@ -356,9 +362,13 @@ function displayRegularScreen() {
   textSize(40);
   text('tears available ', 60, 425-90);
 
+function displayRegularScreen() {
   fill(255);
   textSize(22);
-  text(`Soil Dryness: ${currentDryness}%`, 650, 465); // Use the fetched value
+  text(`Soil Dryness: ${currentDryness}%`, 650, 465); // Display updated value
+
+
+
 
   fill(255);
   textSize(30);
@@ -375,7 +385,7 @@ function displayRegularScreen() {
     fill(255);
   }
 }
-
+}
 function displayHelpmodescreen() {
   clear();
   txt.show();

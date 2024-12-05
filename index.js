@@ -84,14 +84,15 @@ function getMoistureLevel() {
 app.get('/get-moisture', (req, res) => {
   getMoistureLevel()
     .then((moisture) => {
-      console.log(`Sending dryness: ${moisture.dryness}%`);  // Log the dryness value for debugging
-      res.json({ dryness: moisture.dryness }); // Send the dryness percentage to the frontend
+      console.log(`Sending dryness: ${moisture.soilDrynessPercentage}%`);  // Log the dryness value for debugging
+      res.json({ dryness: moisture.soilDrynessPercentage }); // Send the correct dryness percentage to the frontend
     })
     .catch((error) => {
       console.error(error);
       res.status(500).send('Error getting moisture level');
     });
 });
+
 
 function shouldWater(moistureLevel) {
   return moistureLevel > 200;
