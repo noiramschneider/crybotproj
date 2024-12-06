@@ -21,22 +21,22 @@ var callForHelpTriggered = false; // To track if we're in call for help mode
 var txt;
 var currentDryness = 0; // Store the fetched dryness value
 
-
 function fetchTearTotalFromBackend() {
   fetch('/get-tear-total')
     .then((response) => response.json())
     .then((data) => {
-      if (data.tearTotal !== tearTotal) {
-        tearTotal = data.tearTotal; // Update the tearTotal in the frontend
-        tearTotalChanged = true; // Trigger the highlighting effect
-        lastTearUpdateTime = millis(); // Update the time for the blinking effect
-        console.log(`TearTotal synchronized: ${tearTotal} mL`);
+      if (data.tearTotal !== undefined) {
+        console.log(`Tear total fetched: ${data.tearTotal} mL`);
+        tearTotal = data.tearTotal; // Update the global tearTotal variable
+      } else {
+        console.error('Invalid or missing tearTotal value');
       }
     })
     .catch((error) => {
-      console.error('Error fetching tearTotal from backend:', error);
+      console.error('Error fetching tearTotal:', error);
     });
 }
+
 
 function fetchDrynessFromBackend() {
   fetch('/get-moisture')
@@ -44,7 +44,7 @@ function fetchDrynessFromBackend() {
     .then((data) => {
       if (data.dryness !== undefined && !isNaN(data.dryness)) {
         console.log(`Soil dryness fetched: ${data.dryness}%`);
-        displaySoilDryness(data.dryness); // Update the dryness value
+        displaySoilDryness(data.dryness);
       } else {
         console.error('Invalid or missing dryness value');
       }
@@ -53,6 +53,7 @@ function fetchDrynessFromBackend() {
       console.error('Error fetching soil dryness:', error);
     });
 }
+
 
 
 
@@ -86,6 +87,25 @@ function setup() {
   txt = select('#txt');
   txt.input(typing);
   console.log(txt);
+  txt.show();
+  setTimeout(() => txt.elt.focus(), 0); // Focus the text area on load
+
+  // Add a global event listener for the Tab key
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Tab') {
+      event.preventDefault(); // Prevent the default tabbing behavior
+      txt.elt.focus(); // Refocus the text area
+    }
+  });
+
+    // Add a global event listener for the Search key
+  document.addEventListener('keydown', (event) => {
+    if (event.key === '170') {
+      event.preventDefault(); // Prevent the default search key behavior
+      txt.elt.focus(); // Refocus the text area
+    }
+  });
+  
   if (txt){
     txt.show();
     setTimeout(() => txt.elt.focus(), 100);
@@ -201,6 +221,8 @@ if (keyCode === 16) { // Shift key is pressed
       // Immediately trigger watering check after sending text
       triggerWateringCheck();
     }
+     // Refocus the text area
+    setTimeout(() => txt.elt.focus(), 0);
   }
 
   if (keyCode === 13) { // Enter key is pressed
@@ -268,6 +290,11 @@ function chooseCanvas() {
     displayRegularScreen(); // Show the regular screen
     document.getElementById('txt').style.display = "block"; // Show input box
   }
+
+  // Always focus the text area if it's shown
+  if (txt && txt.elt.style.display !== 'none') {
+    setTimeout(() => txt.elt.focus(), 0);
+  }
 }
 
 function videoLoaded() {
@@ -279,7 +306,7 @@ function displayAlert() {
   
   clear();
   image(video2, 0, 0, width, height); // Background video
-
+  txt.hide(); // Hide the text area, no need to focus it
   clicktextcolor = color(255, 255, 255);
   clicktextcolor.setAlpha(128 + 128 * sin(millis() / 1000));
   clicktextcolor2 = color(255, 255, 255);
@@ -300,6 +327,7 @@ function displayCallforHelp() {
   
   clear();
   image(video, 0, 0, width, height); // Background video
+  txt.hide(); // Hide the text area during this display
 
   clicktextcolor = color(255, 255, 255);
   clicktextcolor.setAlpha(128 + 128 * sin(millis() / 1000));
@@ -318,12 +346,10 @@ function displayCallforHelp() {
 }
 
 
-
 function displaySoilDryness(dryness) {
-  currentDryness = Math.round(dryness); // Round to the nearest integer
-  console.log("Current Dryness Value: " + currentDryness); // Log the updated value
+  console.log(`Updating dryness value on the frontend: ${dryness}%`); // Debug log
+  currentDryness = dryness; // Update the global variable
 }
-
 
 
 function displayRegularScreen() {
@@ -362,13 +388,12 @@ function displayRegularScreen() {
   textSize(40);
   text('tears available ', 60, 425-90);
 
-function displayRegularScreen() {
   fill(255);
   textSize(22);
-  text(`Soil Dryness: ${currentDryness}%`, 650, 465); // Display updated value
+  text(`Soil Dryness: ${currentDryness}%`, 650, 465); // Use the global variable
 
-
-
+  txt.show(); // Ensure text area is visible
+  setTimeout(() => txt.elt.focus(), 0); // Focus the text area
 
   fill(255);
   textSize(30);
@@ -385,11 +410,13 @@ function displayRegularScreen() {
     fill(255);
   }
 }
-}
+
 function displayHelpmodescreen() {
   clear();
-  txt.show();
   image(video2, 0, 0, width, height); // Background video
+
+  txt.show(); // Ensure text area is visible
+  setTimeout(() => txt.elt.focus(), 0); // Focus the text ar
 
   fill(255);
   textSize(22);
@@ -422,9 +449,9 @@ function displayHelpmodescreen() {
   textSize(40);
   text('tears available ', 60, 425-90);
 
-  fill(255);
+ fill(255);
   textSize(22);
-  text('Soil Dryness : 40%', 700, 400);
+  text(`Soil Dryness: ${currentDryness}%`, 650, 465); // Use the global variable
 
   if (actualScore < 0) { 
     fill(clicktextcolor);

@@ -51,8 +51,8 @@ function getSensorReadings(sensor) {
 }
 
 function getMoistureLevel() {
-  const completelyWet = 400;  // Adjust based on your sensor calibration
-  const completelyDry = 880;  // Adjust based on your sensor calibration
+  const completelyWet = 400;  // Adjust based on sensor calibration
+  const completelyDry = 880;  // Adjust based on sensor calibration
 
   return new Promise((resolve, reject) => {
     const sensor = mcpadc.open(5, { speedHz: 20000 }, (err) => {
@@ -70,10 +70,10 @@ function getMoistureLevel() {
           100
         ); // Scale dryness to 0–100
 
-        console.log(`Raw sensor value: ${rawValue}, Dryness: ${dryness}%`); // Log the values
+        console.log(`Raw sensor value: ${rawValue}, Dryness: ${dryness}%`);
         resolve({
           rawValue,
-          soilDrynessPercentage: Math.round(dryness), // Corrected property name
+          dryness: Math.round(dryness), // Round to the nearest integer
         });
       });
     });
@@ -81,11 +81,13 @@ function getMoistureLevel() {
 }
 
 
+
+
 app.get('/get-moisture', (req, res) => {
   getMoistureLevel()
     .then((moisture) => {
-      console.log(`Sending dryness: ${moisture.soilDrynessPercentage}%`);  // Log the dryness value for debugging
-      res.json({ dryness: moisture.soilDrynessPercentage }); // Send the correct dryness percentage to the frontend
+      console.log(`Sending dryness: ${moisture.dryness}%`);  // Log the dryness value
+      res.json({ dryness: moisture.dryness }); // Send the dryness to the frontend
     })
     .catch((error) => {
       console.error(error);
@@ -94,39 +96,41 @@ app.get('/get-moisture', (req, res) => {
 });
 
 
+
 function shouldWater(moistureLevel) {
   return moistureLevel > 200;
 }
 
 function waterThePlant() {
   return new Promise(async (resolve, reject) => {
-    const moistureLevel = await getMoistureLevel();
-    console.log(`Soil dryness: ${moistureLevel.soilDrynessPercentage}%`);
-    console.log("tearTotal: " + tearTotal);
+    try {
+      const moistureLevel = await getMoistureLevel();
+      console.log(`Soil dryness: ${moistureLevel.dryness}%`);
+      console.log(`tearTotal: ${tearTotal}`);
 
-    const drynessThreshold = 50; // You can adjust this value based on your preference
-    const requiredTears = 8; // Adjust the tearTotal required for watering the plant
+      const drynessThreshold = 80; // Adjust threshold based on requirements
 
-    // Check if the soil is dry enough and if there are enough tears
-    if (moistureLevel.soilDrynessPercentage >= drynessThreshold && tearTotal >= requiredTears) {
-      pumpRelay.writeSync(0); // Start the pump
-      console.log('Watering the plant...');
-      setTimeout(() => {
-        stopWateringPlant();
-        
-        // Deduct 8 mL from tearTotal after watering
-        tearTotal -= 8;
-        if (tearTotal < 0) tearTotal = 0; // Prevent negative tearTotal
-
-        console.log(`Tear total after watering: ${tearTotal} mL`);
-      }, 3000); // Water for 3 seconds
-    } else {
-      console.log('Not enough tears or soil is moist enough.');
+      if (moistureLevel.dryness > drynessThreshold && tearTotal >= 8) {
+        pumpRelay.writeSync(0); // Start watering
+        console.log('Watering the plant...');
+        setTimeout(() => {
+          pumpRelay.writeSync(1); // Stop watering after 3 seconds
+          tearTotal -= 8; // Deduct tears after watering
+          if (tearTotal < 0) tearTotal = 0; // Prevent negative tearTotal
+          console.log(`TearTotal after watering: ${tearTotal}`);
+          resolve();
+        }, 3000);
+      } else {
+        console.log('Not enough tears or soil is moist enough.');
+        resolve();
+      }
+    } catch (error) {
+      console.error('Error during watering:', error);
+      reject(error);
     }
-
-    resolve();
   });
 }
+
 
 function stopWateringPlant() {
   pumpRelay.writeSync(1); // Stop the pump
