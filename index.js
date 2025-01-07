@@ -11,8 +11,8 @@ var moistureLevel;
 app.use(bodyParser.json()); // To parse JSON request bodies
 // Global tearTotal variable (updated by frontend)
 let tearTotal = 0;
-
-
+let isAttemptingToCry = false;
+let isCrying = false;
 
 
 // API route to get the current tearTotal
@@ -29,6 +29,14 @@ app.post('/update-tear-total', (req, res) => {
   console.log(`Tear total updated: ${tearTotal} mL`);
   res.sendStatus(200); // Respond with success
 });
+
+app.get('/get-watering-state', (req, res) => {
+  res.json({ 
+    isAttemptingToCry: isAttemptingToCry, 
+    isCrying: isCrying 
+  });
+});
+
 
 
 // Relay and watering system setup
@@ -101,35 +109,49 @@ function shouldWater(moistureLevel) {
   return moistureLevel > 200;
 }
 
-function waterThePlant() {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const moistureLevel = await getMoistureLevel();
-      console.log(`Soil dryness: ${moistureLevel.dryness}%`);
-      console.log(`tearTotal: ${tearTotal}`);
+async function waterThePlant() {
+  try {
+    const moistureLevel = await getMoistureLevel();
+    console.log(`Soil dryness: ${moistureLevel.dryness}%`);
+    console.log(`tearTotal: ${tearTotal}`);
 
-      const drynessThreshold = 80; // Adjust threshold based on requirements
+    const drynessThreshold = 80; // Adjust threshold based on requirements
 
-      if (moistureLevel.dryness > drynessThreshold && tearTotal >= 8) {
-        pumpRelay.writeSync(0); // Start watering
-        console.log('Watering the plant...');
+    if (moistureLevel.dryness > drynessThreshold && tearTotal >= 8) {
+      // Start by indicating that we are about to attempt crying
+      isAttemptingToCry = true;
+      isCrying = false;
+      console.log('Attempting to cry...');
+
+      // Wait 5 seconds before actually starting to "cry"
+      setTimeout(() => {
+        // Now transition from attempting to cry -> crying
+        isAttemptingToCry = false;
+        isCrying = true;
+        pumpRelay.writeSync(0); // Start watering (crying)
+        console.log('Crying...');
+
+        // After 3 seconds of crying, stop
         setTimeout(() => {
-          pumpRelay.writeSync(1); // Stop watering after 3 seconds
-          tearTotal -= 8; // Deduct tears after watering
-          if (tearTotal < 0) tearTotal = 0; // Prevent negative tearTotal
+          pumpRelay.writeSync(1); // Stop watering
+          isCrying = false; // Done crying
+          tearTotal -= 8;
+          if (tearTotal < 0) tearTotal = 0;
           console.log(`TearTotal after watering: ${tearTotal}`);
-          resolve();
-        }, 3000);
-      } else {
-        console.log('Not enough tears or soil is moist enough.');
-        resolve();
-      }
-    } catch (error) {
-      console.error('Error during watering:', error);
-      reject(error);
+        }, 3000); // 3 seconds of watering
+
+      }, 5000); // 5 seconds delay before starting watering
+    } else {
+      console.log('Not enough tears or soil is moist enough.');
     }
-  });
+  } catch (error) {
+    console.error('Error during watering:', error);
+    isAttemptingToCry = false;
+    isCrying = false;
+  }
 }
+
+
 
 
 function stopWateringPlant() {
