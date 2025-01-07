@@ -135,7 +135,7 @@ const translations = {
     "pressShiftKey": "APPUYEZ SUR MAJ POUR ENVOYER",
     "soilDryness": "Humidité du sol :",
     "crying": "en train de pleurer...",
-    "attemptingToCry": "tentative de pleurer",
+    "attemptingToCry": 'essaie de pleurer',
 
     // --- displayHelpmodescreen() ---
     "helpNeededLine": "*la plante a besoin d’au moins 8mL par jour",
@@ -546,10 +546,10 @@ text(t("tearsAvailable"), 60, 425-90);
   textSize(22);
    if (isCrying) {
     textSize(30);
-    text('crying...', 60, 400);
+    text(t('crying'), 60, 400);
   } else if (isAttemptingToCry) {
     textSize(30);
-    text('attempting to cry', 60, 400);
+    text(t('attemptingToCry'), 60, 400);
   } else {
     
     textSize(22);
