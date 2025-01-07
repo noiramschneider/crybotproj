@@ -129,12 +129,12 @@ async function waterThePlant() {
         // Now transition from attempting to cry -> crying
         isAttemptingToCry = false;
         isCrying = true;
-        pumpRelay.writeSync(0); // Start watering (crying)
+        pumpRelay.digitalWrite(0); // set pin high
         console.log('Crying...');
 
         // After 3 seconds of crying, stop
         setTimeout(() => {
-          pumpRelay.writeSync(1); // Stop watering
+          pumpRelay.digitalWrite(1); // set pin high
           isCrying = false; // Done crying
           tearTotal -= 8;
           if (tearTotal < 0) tearTotal = 0;
@@ -156,7 +156,7 @@ async function waterThePlant() {
 
 
 function stopWateringPlant() {
-  pumpRelay.writeSync(1); // Stop the pump
+  pumpRelay.digitalWrite(1); // set pin high
   console.log('Stopped watering.');
 }
 
