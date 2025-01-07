@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const { exec } = require('child_process');
 const mcpadc = require('mcp-spi-adc');
-const Gpio = require('onoff').Gpio;
+const Gpio = require('pigpio').Gpio;
 const app = express();
 const bodyParser = require('body-parser');
 
@@ -40,7 +40,8 @@ app.get('/get-watering-state', (req, res) => {
 
 
 // Relay and watering system setup
-const pumpRelay = new Gpio(17, 'high');
+const pumpRelay = new Gpio(17, { mode: Gpio.OUTPUT });
+pumpRelay.digitalWrite(1); // set pin high
 const completelyWet = 400;
 const completelyDry = 880;
 
