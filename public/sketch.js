@@ -1,7 +1,7 @@
 // Déclarations Globales
 var afinn;
 var totalScore = 0;
-var actualScore; 
+var actualScore;
 var tearEstimate = 0;
 var tearTotal = 0;
 var tearsOfJoymode = false;
@@ -10,18 +10,18 @@ var textinput = '';
 var helpMode = false; // Suivi du mode aide
 var VideoIsplaying = true;
 var VideoIspaused = false;
-var scoreChanged = false; // Indicateur de changement de score
+var scoreChanged = false;
 var tearTotalChanged = false;
-var changeColorDuration = 700; // Durée du changement de couleur
-var lastScoreUpdateTime = 0; // Dernière mise à jour du score
+var changeColorDuration = 700;
+var lastScoreUpdateTime = 0;
 var lastTearUpdateTime = 0;
-var lastInteractionTime = 0; // Dernière interaction utilisateur
-var callForHelpTriggered = false; // Suivi du mode appel à l'aide
+var lastInteractionTime = 0;
+var callForHelpTriggered = false;
 var txt;
 var isAttemptingToCry = false;
 var isCrying = false;
-var currentDryness = 0; // Humidité du sol
-let currentDisplay = ""; // Suivi du mode d'affichage
+var currentDryness = 0;
+let currentDisplay = "";
 
 let audioInitialized = false;
 
@@ -29,21 +29,16 @@ let audioInitialized = false;
 const translations = {
   "en": {
     "placeholder": "How do you feel ?",
-    // --- displayAlert() ---
     "alertTitleLine1": "PLEASE",
     "alertTitleLine2": "MAKE",
     "alertTitleLine3": "ME",
     "alertTitleLine4": "CRY",
     "alertPressEnter": "PRESS ENTER TO HELP",
-
-    // --- displayCallforHelp() ---
     "callTitleLine1": "PLEASE",
     "callTitleLine2": "MAKE",
     "callTitleLine3": "ME",
     "callTitleLine4": "SAD",
     "callPressEnter": "PRESS ENTER TO HELP",
-
-    // --- displayRegularScreen() ---
     "regularTitle": "CryBot_v1",
     "regularSubTitle": "Please make me cry",
     "sentimentLabel": "SENTIMENT",
@@ -54,31 +49,21 @@ const translations = {
     "soilDryness": "Soil Dryness:",
     "crying": "crying...",
     "attemptingToCry": "attempting to cry",
-
-    // --- displayHelpmodescreen() ---
     "helpNeededLine": "*the plant needs at least 8mL per day",
-    "helpMe": "Please help!",
-
-    // Tu peux ajouter ou renommer des clés selon tes besoins
+    "helpMe": "Please help!"
   },
-
   "fr": {
     "placeholder": "Comment vous sentez-vous ?",
-    // --- displayAlert() ---
     "alertTitleLine1": "S'IL VOUS PLAÎT",
     "alertTitleLine2": "FAITES",
     "alertTitleLine3": "MOI",
     "alertTitleLine4": "PLEURER",
     "alertPressEnter": "APPUYEZ SUR ENTRÉE POUR AIDER",
-
-    // --- displayCallforHelp() ---
     "callTitleLine1": "S'IL VOUS PLAÎT",
     "callTitleLine2": "RENDEZ",
     "callTitleLine3": "MOI",
     "callTitleLine4": "TRISTE",
     "callPressEnter": "APPUYEZ SUR ENTRÉE POUR AIDER",
-
-    // --- displayRegularScreen() ---
     "regularTitle": "CryBot_v1",
     "regularSubTitle": "Faites-moi pleurer",
     "sentimentLabel": "SENTIMENT",
@@ -89,30 +74,36 @@ const translations = {
     "soilDryness": "Humidité du sol :",
     "crying": "en train de pleurer...",
     "attemptingToCry": "essaie de pleurer",
-
-    // --- displayHelpmodescreen() ---
     "helpNeededLine": "*la plante a besoin d’au moins 8mL par jour",
-    "helpMe": "Aidez-moi s'il vous plaît !",
+    "helpMe": "Aidez-moi s'il vous plaît !"
   }
 };
 
-let currentLanguage = 'en'; // ou 'fr'
+let currentLanguage = 'en';
 
 // Fonction de Traduction
 function t(key) {
   if (translations[currentLanguage] && translations[currentLanguage][key]) {
     return translations[currentLanguage][key];
   }
-  return key; // Retourner la clé elle-même si non trouvé
+  return key;
 }
 
 // Fonction de Typage
 function typing() {
   var textinput = txt.value();
+
+  // Détection du cheat code pour réinitialiser tearTotal
+  if (textinput.trim().toLowerCase() === "resetmytears") {
+    resetTearTotalCheat();
+    txt.value('');
+    return;
+  }
+
   var words = textinput.split(/\W/);
   var scoredwords = [];
   var totalScore = 0;
-  
+
   for (var i = 0; i < words.length; i++) {
     var word = words[i].toLowerCase();
     if (afinn.hasOwnProperty(word)) {
@@ -122,12 +113,12 @@ function typing() {
     }
   }
 
-  if (actualScore !== totalScore) { // Vérifie si le score a changé
+  if (actualScore !== totalScore) {
     actualScore = totalScore;
-    scoreChanged = true; // Marque le score comme changé
-    lastScoreUpdateTime = millis(); // Met à jour le temps de la dernière mise à jour du score
+    scoreChanged = true;
+    lastScoreUpdateTime = millis();
   }
-  
+
   tearEstimate = totalScore * (-1) * 2;
 
   if (totalScore >= 20) {
@@ -138,6 +129,31 @@ function typing() {
   if (tearEstimate <= 0) {
     tearEstimate = 0;
   }
+}
+
+// Fonction de réinitialisation via cheat code
+function resetTearTotalCheat() {
+  console.log("Cheat code détecté : réinitialisation des larmes...");
+  fetch('/reset-tear-total', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ /* secret: "votre_clé_secrète_ici" */ }), // Ajoutez la clé secrète ici si besoin
+  })
+    .then(response => {
+      if (response.ok) {
+        console.log('tearTotal a été réinitialisé avec succès via cheat code.');
+        tearTotal = 0;
+        localStorage.setItem('tearTotal', tearTotal);
+        displayRegularScreen();
+      } else {
+        console.error('Échec de la réinitialisation de tearTotal via cheat code.');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur lors de la réinitialisation de tearTotal via cheat code:', error);
+    });
 }
 
 // Fonction pour charger les ressources avant le démarrage
@@ -176,78 +192,61 @@ function setup() {
   clicktextcolor2.setAlpha(128 + 128 * sin(millis() / 500));
   clicktextcolor3 = color(255, 255, 255);
   clicktextcolor3.setAlpha(128 + 128 * sin(millis() / 100));
-  
+
   textSize(32);
 
   txt = select('#txt');
   txt.input(typing);
   console.log(txt);
-  txt.hide(); // Cacher la textarea initialement
-  // Ne pas mettre le focus sur la textarea car elle est cachée
+  txt.hide(); // On cache la textarea initialement
 
-  // Gestion des touches Tab et Search pour refocus sur la zone de texte
+  // Gestion des touches Tab et Search pour refocaliser la zone de texte
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Tab') {
-      event.preventDefault(); // Empêche le comportement par défaut du Tab
-      txt.elt.focus(); // Refocus sur la zone de texte
+      event.preventDefault();
+      txt.elt.focus();
     }
-    if (event.key === '170') { // Touche Search (peut varier selon le clavier)
-      event.preventDefault(); // Empêche le comportement par défaut
-      txt.elt.focus(); // Refocus sur la zone de texte
+    if (event.key === '170') {
+      event.preventDefault();
+      txt.elt.focus();
     }
   });
-  
-  // Afficher un message d'instruction
-  // La textarea est cachée, donc on ne la montre pas ici
-  // Le message d'instruction sera géré dans la fonction draw()
-  
-  // Initialiser le dernier temps d'interaction
+
   lastInteractionTime = Date.now();
 
-  // Récupérer le tearTotal depuis le stockage local après une mise à jour de la page
+  // Récupérer la valeur de tearTotal depuis localStorage (pour le cas où le backend ne serait pas sollicité)
   let savedTearTotal = localStorage.getItem('tearTotal');
   if (savedTearTotal !== null) {
     tearTotal = parseFloat(savedTearTotal);
-
-    fetchDrynessFromBackend(); // Récupérer l'humidité
-    fetchTearTotalFromBackend(); // Récupérer le tearTotal
-
-    setInterval(fetchDrynessFromBackend, 5000); // Récupérer toutes les 5 secondes
-    setInterval(fetchTearTotalFromBackend, 5000); // Récupérer le tearTotal toutes les 5 secondes
+    fetchDrynessFromBackend();
+    fetchTearTotalFromBackend();
+    setInterval(fetchDrynessFromBackend, 5000);
+    setInterval(fetchTearTotalFromBackend, 5000);
   }
 }
 
-// Fonction pour gérer les pressions de touches
+// Gestion des événements clavier
 function keyPressed() {
   var txt = select('#txt');
-
-  // Réinitialiser le dernier temps d'interaction à chaque pression de touche
   lastInteractionTime = millis();
 
-  // Traduction
   if (keyCode === 216) {
-    currentLanguage = 'en'; // Basculer en anglais
+    currentLanguage = 'en';
     document.getElementById('txt').placeholder = t("placeholder");
     console.log("Language switched to English");
-  } 
-  else if (keyCode === 217) {
-    currentLanguage = 'fr'; // Basculer en français
+  } else if (keyCode === 217) {
+    currentLanguage = 'fr';
     document.getElementById('txt').placeholder = t("placeholder");
     console.log("Langue changée en français");
   }
 
-  // Initialiser l'audio si ce n'est pas déjà fait et que la touche "Enter" est pressée
-  if (!audioInitialized && keyCode === 13) { // Touche Enter
+  if (!audioInitialized && keyCode === 13) {
     userStartAudio().then(() => {
       console.log("Audio context started via Enter key");
       audioInitialized = true;
-      
-      // Si le système est déjà en mode alert ou help, démarrer le son
       if ((imThirsty && !helpMode) || helpMode) {
         alarm.loop();
       }
-      
-      // Afficher la textarea maintenant que l'audio est initialisé
       if (tearTotal >= 8 || (tearTotal < 8 && !callForHelpTriggered)) {
         txt.show();
         setTimeout(() => txt.elt.focus(), 0);
@@ -257,56 +256,48 @@ function keyPressed() {
     });
   }
 
-  // Si en mode "appel à l'aide" et la touche Enter est pressée
-  if (callForHelpTriggered && keyCode === 13) { 
-    callForHelpTriggered = false;  // Quitter le mode appel à l'aide
-    displayRegularScreen();        // Revenir à l'écran régulier
+  if (callForHelpTriggered && keyCode === 13) {
+    callForHelpTriggered = false;
+    displayRegularScreen();
   }
 
-  // Si la touche Enter est pressée et que tearTotal < 8
-  if (tearTotal < 8 && keyCode === 13) { 
-    helpMode = true;  // Entrer en mode aide
-    displayHelpmodescreen(); // Afficher l'écran aide
-    document.getElementById('txt').style.display = "block"; // Afficher la zone de texte
+  if (tearTotal < 8 && keyCode === 13) {
+    helpMode = true;
+    displayHelpmodescreen();
+    document.getElementById('txt').style.display = "block";
   }
 
-  if (keyCode === 16) { // Touche Shift pressée
-    if (tearEstimate > 0) { // Augmenter seulement si tearEstimate > 0
+  if (keyCode === 16) {
+    if (tearEstimate > 0) {
       tearTotal += tearEstimate;
-      tearTotalChanged = true; // Marquer le tearTotal comme changé
-      lastTearUpdateTime = millis(); // Mettre à jour le temps de la dernière mise à jour
-      localStorage.setItem('tearTotal', tearTotal); // Sauvegarder dans le stockage local
-      updateTearTotalBackend(); // Envoyer au backend
-
+      tearTotalChanged = true;
+      lastTearUpdateTime = millis();
+      localStorage.setItem('tearTotal', tearTotal);
+      updateTearTotalBackend();
       tearEstimate = 0;
       actualScore = 0;
       txt.value('');
-
-      // Déclencher immédiatement la vérification d'arrosage après envoi
       triggerWateringCheck();
     }
-    // Refocaliser sur la zone de texte
     setTimeout(() => txt.elt.focus(), 0);
   }
 
-  if (keyCode === 13) { // Touche Enter pressée
+  if (keyCode === 13) {
     if (imThirsty) {
-      helpMode = true;  // Passer en mode aide si en mode "soif"
-      imThirsty = false; // Désactiver le mode "soif"
+      helpMode = true;
+      imThirsty = false;
     }
   }
 
-  if (keyCode === 37) { // Touche flèche gauche
+  if (keyCode === 37) {
     imThirsty = true;
-    // Si audio est initialisé et en mode alert/help, démarrer le son
     if (audioInitialized && ((imThirsty && !helpMode) || helpMode)) {
       alarm.loop();
     }
   }
 
-  if (keyCode === 39) { // Touche flèche droite
+  if (keyCode === 39) {
     imThirsty = false;
-    // Si audio est initialisé et en mode alert/help, démarrer le son
     if (audioInitialized && ((imThirsty && !helpMode) || helpMode)) {
       alarm.loop();
     } else {
@@ -314,231 +305,178 @@ function keyPressed() {
     }
   }
 
-  if (keyCode === 38) { // Touche flèche haut
+  if (keyCode === 38) {
     imThirsty = true;
     helpMode = false;
-    // Démarrer le son si audio est initialisé et pas déjà en train de jouer
     if (audioInitialized && !alarm.isPlaying()) {
       alarm.loop();
     }
   }
 }
 
-// Fonction de Dessin Continu
+// Fonction de dessin continu
 function draw() {
   if (!audioInitialized) {
-    // Afficher uniquement le message d'instruction et cacher la textarea
     background(0);
     textAlign(CENTER, CENTER);
     textSize(32);
     fill(255);
     text("Appuyez sur 'Enter' pour initialiser Crybot", width / 2, height / 2);
-    
-    // S'assurer que la textarea est cachée
     if (txt && txt.elt.style.display !== "none") {
       txt.hide();
     }
-    
-    return; // Ne rien faire d'autre tant que l'audio n'est pas initialisé
+    return;
   }
 
   chooseCanvas();
 
-  // Vérifier si 1 minute (60000 ms) s'est écoulée depuis la dernière interaction
   if (millis() - lastInteractionTime >= 60000 && !callForHelpTriggered) {
-    callForHelpTriggered = true;  // Passer en mode appel à l'aide
-    displayCallforHelp();         // Afficher l'écran d'appel à l'aide
+    callForHelpTriggered = true;
+    displayCallforHelp();
   }
 }
 
-// Fonction pour choisir quel écran afficher
+// Fonction de gestion des écrans
 function chooseCanvas() {
-  // Vérifier si tearTotal atteint 8ml ou plus, si oui, quitter le mode aide
   if (tearTotal >= 8) {
-    helpMode = false; // Quitter le mode aide une fois que tearTotal atteint 8 mL ou plus
+    helpMode = false;
     fetchTearTotalFromBackend();
-    displayRegularScreen(); // Afficher l'écran régulier
-    document.getElementById('txt').style.display = "block"; // Afficher la zone de texte
-    
-    // Arrêter l'alarme si elle jouait
+    displayRegularScreen();
+    document.getElementById('txt').style.display = "block";
     if (alarm.isPlaying()) {
       alarm.stop();
     }
   } else if (tearTotal < 8 && !helpMode) {
-    // Entrer en mode aide lorsque les larmes sont insuffisantes
     helpMode = true;
-    displayHelpmodescreen(); // Afficher l'écran aide
-    document.getElementById('txt').style.display = "block"; // Afficher la zone de texte
-    
-    // Démarrer l'alarme
+    displayHelpmodescreen();
+    document.getElementById('txt').style.display = "block";
     if (audioInitialized && !alarm.isPlaying()) {
       alarm.loop();
     }
   }
 
-  // Gérer les transitions d'inactivité
-  if (millis() - lastInteractionTime >= 60000) { // 1 minute d'inactivité
+  if (millis() - lastInteractionTime >= 60000) {
     if (helpMode) {
       console.log("Inactivity detected in helpMode. Transitioning to Alert.");
-      helpMode = false; // Quitter le mode aide
-      displayAlert(); // Passer en mode alerte
-      document.getElementById('txt').style.display = "none"; // Masquer la zone de texte
-      
-      // Démarrer l'alarme
+      helpMode = false;
+      displayAlert();
+      document.getElementById('txt').style.display = "none";
       if (audioInitialized && !alarm.isPlaying()) {
         alarm.loop();
       }
     } else {
       console.log("Inactivity detected. Transitioning to Call for Help.");
-      callForHelpTriggered = true; // Entrer en mode appel à l'aide
-      displayCallforHelp(); // Afficher l'écran d'appel à l'aide
-      document.getElementById('txt').style.display = "none"; // Masquer la zone de texte
-      
-      // Ne pas démarrer l'alarme en mode Call for Help
-      // Suppression de l'appel à alarm.loop()
+      callForHelpTriggered = true;
+      displayCallforHelp();
+      document.getElementById('txt').style.display = "none";
     }
-    return; // Empêcher d'autres vérifications cette frame
+    return;
   }
 
-  // Si l'utilisateur est en mode "soif" et pas en mode aide
   if (imThirsty && !helpMode) {
-    displayAlert(); // Afficher l'écran d'alerte
-    document.getElementById('txt').style.display = "none"; // Masquer la zone de texte
-    
-    // Démarrer l'alarme
+    displayAlert();
+    document.getElementById('txt').style.display = "none";
     if (audioInitialized && !alarm.isPlaying()) {
       alarm.loop();
     }
   }
 
-  // Afficher continuellement l'écran aide si en mode aide, tearTotal < 8, et pas en mode appel à l'aide
   if (helpMode && tearTotal < 8 && !callForHelpTriggered) {
     displayHelpmodescreen();
     document.getElementById('txt').style.display = "block";
-    
-    // Démarrer l'alarme
     if (audioInitialized && !alarm.isPlaying()) {
       alarm.loop();
     }
   }
 
-  // Si pas en mode aide, pas en mode appel à l'aide, et tearTotal >= 8, afficher l'écran régulier
   if (!helpMode && !callForHelpTriggered && tearTotal >= 8) {
-    displayRegularScreen(); 
-    document.getElementById('txt').style.display = "block"; // Afficher la zone de texte
-    
-    // Arrêter l'alarme
+    displayRegularScreen();
+    document.getElementById('txt').style.display = "block";
     if (alarm.isPlaying()) {
       alarm.stop();
     }
   }
 
-  // Toujours focuser sur la zone de texte si elle est affichée
   if (txt && txt.elt.style.display !== 'none') {
     setTimeout(() => txt.elt.focus(), 0);
   }
 }
 
-// Fonction pour afficher l'écran d'alerte
 function displayAlert() {
   clear();
-  image(video2, 0, 0, width, height); // Vidéo de fond
-
-  // Effet de texte clignotant
+  image(video2, 0, 0, width, height);
   const clicktextcolor = color(255, 255, 255);
-  clicktextcolor.setAlpha(128 + 128 * sin(millis() / 500)); // Ajuster l'alpha avec le temps
-  textAlign(CENTER); // Centrage horizontal
+  clicktextcolor.setAlpha(128 + 128 * sin(millis() / 500));
+  textAlign(CENTER);
   fill(clicktextcolor);
   textSize(100);
   text(t("alertTitleLine1"), width / 2, 380);
   text(t("alertTitleLine2"), width / 2, 480);
   text(t("alertTitleLine3"), width / 2, 580);
   text(t("alertTitleLine4"), width / 2, 680);
-
-  // Message d'aide clignotant
   const clicktextcolor2 = color(255, 255, 255);
-  clicktextcolor2.setAlpha(128 + 128 * sin(millis() / 300)); // Ajuster l'alpha plus rapidement
-
+  clicktextcolor2.setAlpha(128 + 128 * sin(millis() / 300));
   fill(clicktextcolor2);
   textSize(25);
   text(t("alertPressEnter"), width / 2, 900);
-
-  // Jouer le son si pas déjà en train de jouer
   if (!alarm.isPlaying() && audioInitialized) {
     alarm.loop();
   }
 }
 
-// Fonction pour afficher l'écran d'appel à l'aide
 function displayCallforHelp() {
   clear();
-  image(video, 0, 0, width, height); // Vidéo de fond
-  textAlign(CENTER); // Centrage horizontal
-
-  // Effet de texte clignotant
+  image(video, 0, 0, width, height);
+  textAlign(CENTER);
   const clicktextcolor = color(255, 255, 255);
-  clicktextcolor.setAlpha(128 + 128 * sin(millis() / 1000)); // Clignotement plus lent
-
+  clicktextcolor.setAlpha(128 + 128 * sin(millis() / 1000));
   fill(clicktextcolor);
   textSize(100);
-
   text(t("callTitleLine1"), width / 2, 380);
   text(t("callTitleLine2"), width / 2, 480);
   text(t("callTitleLine3"), width / 2, 580);
   text(t("callTitleLine4"), width / 2, 680);
-
-  // Message d'aide clignotant
   const clicktextcolor2 = color(255, 255, 255);
-  clicktextcolor2.setAlpha(128 + 128 * sin(millis() / 500)); // Clignotement plus rapide
-
+  clicktextcolor2.setAlpha(128 + 128 * sin(millis() / 500));
   fill(clicktextcolor2);
   textSize(25);
   text(t("callPressEnter"), width / 2, 900);
-
-  // **Ne pas jouer le son en mode Call for Help**
-  // Suppression de l'appel à alarm.loop()
 }
 
-// Fonction pour afficher l'écran régulier
 function displayRegularScreen() {
   txt.show();
   clear();
-  alarm.stop(); // Arrêter le son ici
-  image(video, 0, 0, width, height); // Vidéo de fond
-  textAlign(LEFT); // Alignement à gauche
+  alarm.stop();
+  image(video, 0, 0, width, height);
+  textAlign(LEFT);
   fill(255);
   textSize(22);
   text(t("regularTitle"), 50, 50);
-
   clicktextcolor = color(255, 255, 255);
   clicktextcolor.setAlpha(128 + 128 * sin(millis() / 1000));
   fill(clicktextcolor);
   text(t("regularSubTitle"), 1000, 50);
-
   img.resize(300, 0);
-  image(img, 820, 130); // Logo
-
-  txt.show(); // Assurer que la zone de texte est visible
-  setTimeout(() => txt.elt.focus(), 0); // Focus sur la zone de texte
-
+  image(img, 820, 130);
+  txt.show();
+  setTimeout(() => txt.elt.focus(), 0);
   fill(255);
   textSize(25);
-  text(t("sentimentLabel"), 700-40, 600);
+  text(t("sentimentLabel"), 660, 600);
   textSize(25);
   highlightText();
-
-  text(actualScore, 870-40, 600); // Score mis à jour
+  text(actualScore, 830, 600);
   fill(255);
   textSize(25);
-  text(t("tearEstimateLabel"), 950-40, 600);
+  text(t("tearEstimateLabel"), 910, 600);
   textSize(25);
-  text(tearEstimate + ' mL', 1170, 600); // Score mis à jour
+  text(tearEstimate + ' mL', 1170, 600);
   fill(255);
   textSize(70);
   highlightTearTotal();
-  text(tearTotal + ' mL', 60, 390-100);
+  text(tearTotal + ' mL', 60, 290);
   textSize(40);
-  text(t("tearsAvailable"), 60, 425-90);
+  text(t("tearsAvailable"), 60, 335);
   textSize(22);
   text('______', 60,350)
   fill(255);
@@ -553,119 +491,98 @@ function displayRegularScreen() {
     textSize(22);
     text(t("eightMLneeded"), 60, 400);
   }
-  //text('Until next crying attempt', 60, 430);
-
   fill(255);
   textSize(22);
   text(`${t("soilDryness")} ${currentDryness}%`, 650, 465);
-
-  if (actualScore < 0) { 
-    fill(clicktextcolor);
-    textSize(25);
-    text(t("pressShiftKey"), 512, 960);
-    fill(255);
-  }
-
-  // Arrêter le son si on est passé en mode régulier
-  if (!((imThirsty && !helpMode) || helpMode) && alarm.isPlaying()) {
-    alarm.stop();
-  }
-}
-
-// Fonction pour afficher l'écran aide
-function displayHelpmodescreen() {
-  clear();
-  image(video2, 0, 0, width, height); // Vidéo de fond
-
-  txt.show(); // Assurer que la zone de texte est visible
-  setTimeout(() => txt.elt.focus(), 0); // Focus sur la zone de texte
-  textAlign(LEFT); // Alignement à gauche
-  fill(255);
-  textSize(22);
-  text(t("regularTitle"), 50, 50);
-
-  clicktextcolor = color(255, 255, 255);
-  clicktextcolor.setAlpha(128 + 128 * sin(millis() / 1000));
-  fill(clicktextcolor);
-  text(t("regularSubTitle"), 1000, 50);
-
-  img.resize(300, 0);
-  image(img, 820, 130); // Afficher le logo
-
-  fill(255);
-  textSize(25);
-  text(t("sentimentLabel"), 700-40, 600);
-  textSize(25);
-  highlightText();
-
-  text(actualScore, 870-40, 600); // Score mis à jour
-  fill(255);
-  textSize(25);
-  text(t("tearEstimateLabel"), 950-40, 600);
-  textSize(25);
-  text(tearEstimate + ' mL', 1170, 600); // Score mis à jour
-  fill(255);
-  textSize(70);
-  highlightTearTotal();
-  text(tearTotal + ' mL', 60, 390 - 100);
-  textSize(40);
-  text(t("tearsAvailable"), 60, 425-90);
-
-  textSize(22);
-  text('______', 60,350)
-  fill(255);
-  textSize(22);
-  text(t("helpNeededLine"), 60, 400);
-  text(t("helpMe"), 60, 430);
-
-  fill(255);
-  textSize(22);
-  text(`${t("soilDryness")} ${currentDryness}%`, 650, 465);
-
   if (actualScore < 0) {
     fill(clicktextcolor);
     textSize(25);
     text(t("pressShiftKey"), 512, 960);
     fill(255);
   }
+  if (!((imThirsty && !helpMode) || helpMode) && alarm.isPlaying()) {
+    alarm.stop();
+  }
+}
 
-  // Jouer le son si pas déjà en train de jouer
+function displayHelpmodescreen() {
+  clear();
+  image(video2, 0, 0, width, height);
+  txt.show();
+  setTimeout(() => txt.elt.focus(), 0);
+  textAlign(LEFT);
+  fill(255);
+  textSize(22);
+  text(t("regularTitle"), 50, 50);
+  clicktextcolor = color(255, 255, 255);
+  clicktextcolor.setAlpha(128 + 128 * sin(millis() / 1000));
+  fill(clicktextcolor);
+  text(t("regularSubTitle"), 1000, 50);
+  img.resize(300, 0);
+  image(img, 820, 130);
+  fill(255);
+  textSize(25);
+  text(t("sentimentLabel"), 660, 600);
+  textSize(25);
+  highlightText();
+  text(actualScore, 830, 600);
+  fill(255);
+  textSize(25);
+  text(t("tearEstimateLabel"), 910, 600);
+  textSize(25);
+  text(tearEstimate + ' mL', 1170, 600);
+  fill(255);
+  textSize(70);
+  highlightTearTotal();
+  text(tearTotal + ' mL', 60, 290);
+  textSize(40);
+  text(t("tearsAvailable"), 60, 335);
+  textSize(22);
+  text('______', 60,350)
+  fill(255);
+  textSize(22);
+  text(t("helpNeededLine"), 60, 400);
+  text(t("helpMe"), 60, 430);
+  fill(255);
+  textSize(22);
+  text(`${t("soilDryness")} ${currentDryness}%`, 650, 465);
+  if (actualScore < 0) {
+    fill(clicktextcolor);
+    textSize(25);
+    text(t("pressShiftKey"), 512, 960);
+    fill(255);
+  }
   if (!alarm.isPlaying() && audioInitialized) {
     alarm.loop();
   }
 }
 
-// Fonction pour mettre en évidence le texte du sentiment
 function highlightText() {
   if (scoreChanged && millis() - lastScoreUpdateTime <= changeColorDuration && actualScore != 0) {
-    // Effet clignotant : alterner la visibilité toutes les 100 millisecondes
     if (floor((millis() - lastScoreUpdateTime) / 100) % 2 === 0) {
-      fill(255); // Couleur blanche lorsqu'elle est visible
+      fill(255);
     } else {
-      fill(0, 0, 0, 0); // Transparent lorsqu'elle est invisible
+      fill(0, 0, 0, 0);
     }
   } else {
-    fill(255); // Couleur par défaut
-    scoreChanged = false; // Réinitialiser l'indicateur de changement de score
+    fill(255);
+    scoreChanged = false;
   }
 }
 
-// Fonction pour mettre en évidence le tearTotal
 function highlightTearTotal() {
   if (tearTotalChanged && millis() - lastTearUpdateTime <= changeColorDuration) {
-    // Effet clignotant : alterner la visibilité toutes les 200 millisecondes
     if (floor((millis() - lastTearUpdateTime) / 200) % 2 === 0) {
-      fill(255); // Visible
+      fill(255);
     } else {
-      fill(0, 0, 0, 0); // Transparent lorsqu'elle est invisible
+      fill(0, 0, 0, 0);
     }
   } else {
-    fill(255); // Couleur par défaut
-    tearTotalChanged = false; // Réinitialiser l'indicateur
+    fill(255);
+    tearTotalChanged = false;
   }
 }
 
-// Fonction pour déclencher une vérification d'arrosage
 function triggerWateringCheck() {
   fetch('/check-and-water', {
     method: 'POST',
@@ -685,20 +602,18 @@ function triggerWateringCheck() {
     });
 }
 
-// Fonction pour mettre à jour l'humidité du sol sur le frontend
 function displaySoilDryness(dryness) {
-  console.log(`Updating dryness value on the frontend: ${dryness}%`); // Log de débogage
-  currentDryness = dryness; // Mettre à jour la variable globale
+  console.log(`Updating dryness value on the frontend: ${dryness}%`);
+  currentDryness = dryness;
 }
 
-// Fonction pour mettre à jour le tearTotal depuis le backend
 function fetchTearTotalFromBackend() {
   fetch('/get-tear-total')
     .then((response) => response.json())
     .then((data) => {
       if (data.tearTotal !== undefined) {
         console.log(`Tear total fetched: ${data.tearTotal} mL`);
-        tearTotal = data.tearTotal; // Mettre à jour la variable globale
+        tearTotal = data.tearTotal;
       } else {
         console.error('Invalid or missing tearTotal value');
       }
@@ -708,7 +623,6 @@ function fetchTearTotalFromBackend() {
     });
 }
 
-// Fonction pour mettre à jour l'humidité du sol depuis le backend
 function fetchDrynessFromBackend() {
   fetch('/get-moisture')
     .then((response) => response.json())
@@ -725,9 +639,7 @@ function fetchDrynessFromBackend() {
     });
 }
 
-// Fonction pour récupérer l'état d'arrosage toutes les 5 secondes
-setInterval(fetchWateringState, 5000); // toutes les 5 secondes
-
+setInterval(fetchWateringState, 5000);
 function fetchWateringState() {
   fetch('/get-watering-state')
     .then(response => response.json())
@@ -740,14 +652,13 @@ function fetchWateringState() {
     });
 }
 
-// Fonction pour mettre à jour le tearTotal sur le backend
 function updateTearTotalBackend() {
   fetch('/update-tear-total', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ tearTotal: tearTotal }), // Envoyer tearTotal en JSON
+    body: JSON.stringify({ tearTotal: tearTotal }),
   })
     .then((response) => {
       if (response.ok) {
