@@ -5,13 +5,13 @@ const mcpadc = require('mcp-spi-adc');
 const Gpio = require('pigpio').Gpio;
 const app = express();
 const bodyParser = require('body-parser');
-const fs = require('fs');  // Ajout du module fs
+const fs = require('fs');  // Module pour la manipulation de fichiers
 
 var moistureLevel;
 
-app.use(bodyParser.json()); // Pour parser les corps de requête JSON
+app.use(bodyParser.json()); // Pour parser les requêtes JSON
 
-// --- Gestion de la sauvegarde de tearTotal ---
+// --- Gestion de la sauvegarde de tearTotal dans un fichier ---
 function loadTearTotal() {
   try {
     const data = fs.readFileSync('tearTotal.json', 'utf8');
@@ -37,7 +37,7 @@ function saveTearTotal() {
   });
 }
 
-// Variable globale tearTotal initialisée depuis le fichier
+// Initialisation de la variable globale tearTotal depuis le fichier
 let tearTotal = loadTearTotal();
 let isAttemptingToCry = false;
 let isCrying = false;
@@ -49,7 +49,7 @@ app.get('/get-tear-total', (req, res) => {
   res.json({ tearTotal: tearTotal });
 });
 
-// Servir l'interface p5.js statique
+// Servir l'interface statique (vos fichiers p5.js, index.html, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Endpoint pour mettre à jour le tearTotal depuis le frontend
@@ -68,9 +68,23 @@ app.get('/get-watering-state', (req, res) => {
   });
 });
 
+// --- Endpoint pour réinitialiser tearTotal via un cheat code ---
+app.post('/reset-tear-total', (req, res) => {
+  // Si nécessaire, vous pouvez vérifier une clé secrète ici :
+  // const { secret } = req.body;
+  // if (secret !== 'votre_clé_secrète_ici') {
+  //   console.warn('Tentative de réinitialisation avec une clé incorrecte.');
+  //   return res.status(403).send('Forbidden');
+  // }
+  tearTotal = 0;
+  console.log('tearTotal a été réinitialisé à 0 mL');
+  saveTearTotal();
+  res.sendStatus(200);
+});
+
 // --- Configuration du relais (pompe) ---
 const pumpRelay = new Gpio(17, { mode: Gpio.OUTPUT });
-pumpRelay.digitalWrite(1); // Mise à l'état haut
+pumpRelay.digitalWrite(1); // Placer le relais à l'état haut
 const completelyWet = 400;
 const completelyDry = 880;
 
@@ -126,18 +140,18 @@ async function waterThePlant() {
     const moistureLevel = await getMoistureLevel();
     console.log(`Soil dryness: ${moistureLevel.dryness}%`);
     console.log(`tearTotal: ${tearTotal}`);
-    const drynessThreshold = 80;
+    const drynessThreshold = 80; // Seuil ajustable
     if (moistureLevel.dryness > drynessThreshold && tearTotal >= 8) {
       isAttemptingToCry = true;
       isCrying = false;
       console.log('Attempting to cry...');
-      // Attendre 5 secondes avant de lancer la pompe
+      // Attendre 5 secondes avant de lancer le relais (arrosage)
       setTimeout(() => {
         isAttemptingToCry = false;
         isCrying = true;
         pumpRelay.digitalWrite(0);
         console.log('Crying...');
-        // Après 3 secondes, arrêter la pompe
+        // Après 3 secondes, arrêter le relais
         setTimeout(() => {
           pumpRelay.digitalWrite(1);
           isCrying = false;
@@ -162,7 +176,7 @@ function stopWateringPlant() {
   console.log('Stopped watering.');
 }
 
-// --- Planification ---
+// --- Planification avec node-schedule ---
 const schedule = require('node-schedule');
 schedule.scheduleJob({ hour: 17, minute: 30, tz: 'America/Toronto' }, () => {
   console.log('Daily watering check at 17:30 triggered.');
@@ -176,7 +190,7 @@ app.post('/check-and-water', (req, res) => {
   res.sendStatus(200);
 });
 
-// Démarrer le serveur
+// Démarrer le serveur sur le port 3000
 app.listen(3000, () => {
   console.log('Interface running at http://localhost:3000');
 });
