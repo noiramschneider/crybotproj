@@ -5,31 +5,62 @@ const mcpadc = require('mcp-spi-adc');
 const Gpio = require('pigpio').Gpio;
 const app = express();
 const bodyParser = require('body-parser');
+const fs = require('fs');  // Ajout du module fs
 
 var moistureLevel;
 
-app.use(bodyParser.json()); // To parse JSON request bodies
-// Global tearTotal variable (updated by frontend)
-let tearTotal = 0;
+app.use(bodyParser.json()); // Pour parser les corps de requête JSON
+
+// --- Gestion de la sauvegarde de tearTotal ---
+function loadTearTotal() {
+  try {
+    const data = fs.readFileSync('tearTotal.json', 'utf8');
+    const json = JSON.parse(data);
+    if (typeof json.tearTotal === 'number') {
+      console.log(`tearTotal chargé depuis le fichier : ${json.tearTotal} mL`);
+      return json.tearTotal;
+    }
+  } catch (error) {
+    console.warn('Aucune sauvegarde trouvée, initialisation de tearTotal à 0.');
+  }
+  return 0;
+}
+
+function saveTearTotal() {
+  const data = JSON.stringify({ tearTotal: tearTotal }, null, 2);
+  fs.writeFile('tearTotal.json', data, 'utf8', (err) => {
+    if (err) {
+      console.error('Erreur lors de la sauvegarde du tearTotal :', err);
+    } else {
+      console.log(`tearTotal sauvegardé dans le fichier : ${tearTotal} mL`);
+    }
+  });
+}
+
+// Variable globale tearTotal initialisée depuis le fichier
+let tearTotal = loadTearTotal();
 let isAttemptingToCry = false;
 let isCrying = false;
 
+// --- API Routes ---
 
-// API route to get the current tearTotal
+// Endpoint pour obtenir le tearTotal
 app.get('/get-tear-total', (req, res) => {
-  res.json({ tearTotal: tearTotal }); // Send the current tearTotal as JSON
+  res.json({ tearTotal: tearTotal });
 });
 
-// Serve the p5.js interface
+// Servir l'interface p5.js statique
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API route to updaacte tearTotal from frontend
+// Endpoint pour mettre à jour le tearTotal depuis le frontend
 app.post('/update-tear-total', (req, res) => {
-  tearTotal = req.body.tearTotal; // Update the global tearTotal
+  tearTotal = req.body.tearTotal;
   console.log(`Tear total updated: ${tearTotal} mL`);
-  res.sendStatus(200); // Respond with success
+  saveTearTotal();
+  res.sendStatus(200);
 });
 
+// Endpoint pour obtenir l'état d'arrosage
 app.get('/get-watering-state', (req, res) => {
   res.json({ 
     isAttemptingToCry: isAttemptingToCry, 
@@ -37,17 +68,13 @@ app.get('/get-watering-state', (req, res) => {
   });
 });
 
-
-
-// Relay and watering system setup
+// --- Configuration du relais (pompe) ---
 const pumpRelay = new Gpio(17, { mode: Gpio.OUTPUT });
-pumpRelay.digitalWrite(1); // set pin high
+pumpRelay.digitalWrite(1); // Mise à l'état haut
 const completelyWet = 400;
 const completelyDry = 880;
 
-
-
-// Watering logic
+// --- Logique d'arrosage ---
 function getSensorReadings(sensor) {
   return new Promise((resolve, reject) => {
     sensor.read((readError, reading) => {
@@ -60,43 +87,33 @@ function getSensorReadings(sensor) {
 }
 
 function getMoistureLevel() {
-  const completelyWet = 400;  // Adjust based on sensor calibration
-  const completelyDry = 880;  // Adjust based on sensor calibration
-
+  const completelyWet = 400;
+  const completelyDry = 880;
   return new Promise((resolve, reject) => {
     const sensor = mcpadc.open(5, { speedHz: 20000 }, (err) => {
       if (err) return reject(`Error accessing sensor: ${err}`);
-
       sensor.read((error, reading) => {
         if (error) return reject(`Error reading sensor: ${error}`);
-
         const rawValue = reading.rawValue;
         const dryness = Math.min(
-          Math.max(
-            ((rawValue - completelyWet) / (completelyDry - completelyWet)) * 100,
-            0
-          ),
+          Math.max(((rawValue - completelyWet) / (completelyDry - completelyWet)) * 100, 0),
           100
-        ); // Scale dryness to 0–100
-
+        );
         console.log(`Raw sensor value: ${rawValue}, Dryness: ${dryness}%`);
         resolve({
           rawValue,
-          dryness: Math.round(dryness), // Round to the nearest integer
+          dryness: Math.round(dryness)
         });
       });
     });
   });
 }
 
-
-
-
 app.get('/get-moisture', (req, res) => {
   getMoistureLevel()
     .then((moisture) => {
-      console.log(`Sending dryness: ${moisture.dryness}%`);  // Log the dryness value
-      res.json({ dryness: moisture.dryness }); // Send the dryness to the frontend
+      console.log(`Sending dryness: ${moisture.dryness}%`);
+      res.json({ dryness: moisture.dryness });
     })
     .catch((error) => {
       console.error(error);
@@ -104,44 +121,32 @@ app.get('/get-moisture', (req, res) => {
     });
 });
 
-
-
-function shouldWater(moistureLevel) {
-  return moistureLevel > 200;
-}
-
 async function waterThePlant() {
   try {
     const moistureLevel = await getMoistureLevel();
     console.log(`Soil dryness: ${moistureLevel.dryness}%`);
     console.log(`tearTotal: ${tearTotal}`);
-
-    const drynessThreshold = 80; // Adjust threshold based on requirements
-
+    const drynessThreshold = 80;
     if (moistureLevel.dryness > drynessThreshold && tearTotal >= 8) {
-      // Start by indicating that we are about to attempt crying
       isAttemptingToCry = true;
       isCrying = false;
       console.log('Attempting to cry...');
-
-      // Wait 5 seconds before actually starting to "cry"
+      // Attendre 5 secondes avant de lancer la pompe
       setTimeout(() => {
-        // Now transition from attempting to cry -> crying
         isAttemptingToCry = false;
         isCrying = true;
-        pumpRelay.digitalWrite(0); // set pin high
+        pumpRelay.digitalWrite(0);
         console.log('Crying...');
-
-        // After 3 seconds of crying, stop
+        // Après 3 secondes, arrêter la pompe
         setTimeout(() => {
-          pumpRelay.digitalWrite(1); // set pin high
-          isCrying = false; // Done crying
+          pumpRelay.digitalWrite(1);
+          isCrying = false;
           tearTotal -= 8;
           if (tearTotal < 0) tearTotal = 0;
           console.log(`TearTotal after watering: ${tearTotal}`);
-        }, 3000); // 3 seconds of watering
-
-      }, 5000); // 5 seconds delay before starting watering
+          saveTearTotal();
+        }, 3000);
+      }, 5000);
     } else {
       console.log('Not enough tears or soil is moist enough.');
     }
@@ -152,36 +157,26 @@ async function waterThePlant() {
   }
 }
 
-
-
-
 function stopWateringPlant() {
-  pumpRelay.digitalWrite(1); // set pin high
+  pumpRelay.digitalWrite(1);
   console.log('Stopped watering.');
 }
 
-/* Run the watering check every minute
-setInterval(() => {
-  waterThePlant();
-}, 60000);*/
-
-
+// --- Planification ---
 const schedule = require('node-schedule');
-
-// Schedule a daily check at 17:30 Montreal local time
 schedule.scheduleJob({ hour: 17, minute: 30, tz: 'America/Toronto' }, () => {
   console.log('Daily watering check at 17:30 triggered.');
-  waterThePlant(); // Trigger the watering logic
+  waterThePlant();
 });
 
-// Endpoint to check and water when triggered by frontend
+// Endpoint pour déclencher l'arrosage depuis le frontend
 app.post('/check-and-water', (req, res) => {
   console.log('Watering check triggered from frontend.');
-  waterThePlant(); // Trigger the watering logic
+  waterThePlant();
   res.sendStatus(200);
 });
 
-// Start server
+// Démarrer le serveur
 app.listen(3000, () => {
   console.log('Interface running at http://localhost:3000');
 });
