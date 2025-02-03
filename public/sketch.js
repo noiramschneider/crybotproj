@@ -256,6 +256,24 @@ function keyPressed() {
     });
   }
 
+  if (keyCode === 13 && txt.value().trim() !== "") {
+  // Si un message est saisi, on l'envoie :
+  if (tearEstimate > 0) {
+    tearTotal += tearEstimate;
+    tearTotalChanged = true;
+    lastTearUpdateTime = millis();
+    localStorage.setItem('tearTotal', tearTotal);
+    updateTearTotalBackend();
+  }
+  // Réinitialisation et envoi du message (pour message triste ou positif)
+  tearEstimate = 0;
+  actualScore = 0;
+  txt.value('');
+  triggerWateringCheck();
+  setTimeout(() => txt.elt.focus(), 0);
+  return; // Empêche l'exécution des autres traitements liés à Enter
+}
+  
   if (callForHelpTriggered && keyCode === 13) {
     callForHelpTriggered = false;
     displayRegularScreen();
