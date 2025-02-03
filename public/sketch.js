@@ -540,7 +540,8 @@ function displayRegularScreen() {
  /* if (actualScore < 0) {
     fill(clicktextcolor);
     textSize(25);
-    text(t("pressShiftKey"), 512, 960);
+    textAlign(CENTER); // Définit l'alignement horizontal au centre
+    text(t("pressShiftKey"), width / 2, 960); // Place le texte au milieu de la largeur du canvas
     fill(255);
   } */
   if (!((imThirsty && !helpMode) || helpMode) && alarm.isPlaying()) {
