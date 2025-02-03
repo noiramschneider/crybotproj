@@ -256,7 +256,7 @@ function keyPressed() {
     });
   }
 
- /* if (keyCode === 13 && txt.value().trim() !== "") {
+  if (keyCode === 13 && txt.value().trim() !== "") {
   // Si un message est saisi, on l'envoie :
   if (tearEstimate > 0) {
     tearTotal += tearEstimate;
@@ -272,7 +272,7 @@ function keyPressed() {
   triggerWateringCheck();
   setTimeout(() => txt.elt.focus(), 0);
   return; // Empêche l'exécution des autres traitements liés à Enter
-} */
+} 
   
   if (callForHelpTriggered && keyCode === 13) {
     callForHelpTriggered = false;
@@ -311,22 +311,7 @@ if (keyCode === 16) {
       helpMode = true;
       imThirsty = false;
     }
-     if (txt.value().trim() !== "") {
-    // Si tearEstimate > 0 (donc message triste), on met à jour tearTotal
-    if (tearEstimate > 0) {
-      tearTotal += tearEstimate;
-      tearTotalChanged = true;
-      lastTearUpdateTime = millis();
-      localStorage.setItem('tearTotal', tearTotal);
-      updateTearTotalBackend();
-    }
-    // Dans tous les cas, on réinitialise les variables et on vide le champ
-    tearEstimate = 0;
-    actualScore = 0;
-    txt.value('');
-    triggerWateringCheck();
-  }
-  setTimeout(() => txt.elt.focus(), 0);
+
   }
 
   if (keyCode === 37) {
