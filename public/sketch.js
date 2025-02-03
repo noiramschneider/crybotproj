@@ -487,6 +487,14 @@ function displayRegularScreen() {
   text('______', 60,350)
   fill(255);
   textSize(22);
+
+  if (txt.value().trim() !== "") {
+  fill(clicktextcolor);
+  textSize(25);
+  text(t("pressShiftKey"), 512, 960);
+  fill(255);
+}
+
   if (isCrying) {
     textSize(30);
     text(t('crying'), 60, 400);
@@ -500,12 +508,12 @@ function displayRegularScreen() {
   fill(255);
   textSize(22);
   text(`${t("soilDryness")} ${currentDryness}%`, 650, 465);
-  if (actualScore < 0) {
+ /* if (actualScore < 0) {
     fill(clicktextcolor);
     textSize(25);
     text(t("pressShiftKey"), 512, 960);
     fill(255);
-  }
+  } */
   if (!((imThirsty && !helpMode) || helpMode) && alarm.isPlaying()) {
     alarm.stop();
   }
@@ -552,12 +560,19 @@ function displayHelpmodescreen() {
   fill(255);
   textSize(22);
   text(`${t("soilDryness")} ${currentDryness}%`, 650, 465);
-  if (actualScore < 0) {
+
+    if (txt.value().trim() !== "") {
+  fill(clicktextcolor);
+  textSize(25);
+  text(t("pressShiftKey"), 512, 960);
+  fill(255);
+}
+/*  if (actualScore < 0) {
     fill(clicktextcolor);
     textSize(25);
     text(t("pressShiftKey"), 512, 960);
     fill(255);
-  }
+  } */
   if (!alarm.isPlaying() && audioInitialized) {
     alarm.loop();
   }
