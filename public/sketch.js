@@ -196,6 +196,12 @@ function setup() {
   textSize(32);
 
   txt = select('#txt');
+  txt.elt.addEventListener('keydown', function(e) {
+  if (e.keyCode === 13) {
+    e.preventDefault();
+  }
+});
+
   txt.input(typing);
   console.log(txt);
   txt.hide(); // On cache la textarea initialement
