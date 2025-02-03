@@ -236,15 +236,18 @@ function keyPressed() {
   var txt = select('#txt');
   lastInteractionTime = millis();
 
-  if (keyCode === 216) {
-    currentLanguage = 'en';
-    document.getElementById('txt').placeholder = t("placeholder");
-    console.log("Language switched to English");
-  } else if (keyCode === 217) {
-    currentLanguage = 'fr';
-    document.getElementById('txt').placeholder = t("placeholder");
-    console.log("Langue changée en français");
-  }
+ if (keyCode === 216) {
+  currentLanguage = 'en';
+  document.getElementById('txt').placeholder = t("placeholder");
+  document.getElementById('txt').setAttribute('lang', 'en');  // Ajouté pour l'anglais
+  console.log("Language switched to English");
+} else if (keyCode === 217) {
+  currentLanguage = 'fr';
+  document.getElementById('txt').placeholder = t("placeholder");
+  document.getElementById('txt').setAttribute('lang', 'fr');  // Ajouté pour le français
+  console.log("Langue changée en français");
+}
+
 
   if (!audioInitialized && keyCode === 13) {
     userStartAudio().then(() => {
