@@ -267,20 +267,26 @@ function keyPressed() {
     document.getElementById('txt').style.display = "block";
   }
 
-  if (keyCode === 16) {
+if (keyCode === 16) {
+  // On vérifie qu'un message a été saisi (non vide)
+  if (txt.value().trim() !== "") {
+    // Si tearEstimate > 0 (donc message triste), on met à jour tearTotal
     if (tearEstimate > 0) {
       tearTotal += tearEstimate;
       tearTotalChanged = true;
       lastTearUpdateTime = millis();
       localStorage.setItem('tearTotal', tearTotal);
       updateTearTotalBackend();
-      tearEstimate = 0;
-      actualScore = 0;
-      txt.value('');
-      triggerWateringCheck();
     }
-    setTimeout(() => txt.elt.focus(), 0);
+    // Dans tous les cas, on réinitialise les variables et on vide le champ
+    tearEstimate = 0;
+    actualScore = 0;
+    txt.value('');
+    triggerWateringCheck();
   }
+  setTimeout(() => txt.elt.focus(), 0);
+}
+
 
   if (keyCode === 13) {
     if (imThirsty) {
