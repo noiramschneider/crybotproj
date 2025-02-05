@@ -159,7 +159,7 @@ async function waterThePlant() {
           if (tearTotal < 0) tearTotal = 0;
           console.log(`TearTotal after watering: ${tearTotal}`);
           saveTearTotal();
-        }, 3000);
+        }, 12000);
       }, 5000);
     } else {
       console.log('Not enough tears or soil is moist enough.');
@@ -178,8 +178,8 @@ function stopWateringPlant() {
 
 // --- Planification avec node-schedule ---
 const schedule = require('node-schedule');
-schedule.scheduleJob({ hour: 17, minute: 30, tz: 'America/Toronto' }, () => {
-  console.log('Daily watering check at 17:30 triggered.');
+schedule.scheduleJob({ hour: 16, minute: 30, tz: 'America/Toronto' }, () => {
+  console.log('Daily watering check at 16:30 triggered.');
   waterThePlant();
 });
 
