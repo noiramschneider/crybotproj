@@ -140,7 +140,7 @@ async function waterThePlant() {
     const moistureLevel = await getMoistureLevel();
     console.log(`Soil dryness: ${moistureLevel.dryness}%`);
     console.log(`tearTotal: ${tearTotal}`);
-    const drynessThreshold = 80; // Seuil ajustable
+    const drynessThreshold = 70; // Seuil ajustable
     if (moistureLevel.dryness > drynessThreshold && tearTotal >= 8) {
       isAttemptingToCry = true;
       isCrying = false;
@@ -159,7 +159,7 @@ async function waterThePlant() {
           if (tearTotal < 0) tearTotal = 0;
           console.log(`TearTotal after watering: ${tearTotal}`);
           saveTearTotal();
-        }, 12000);
+        }, 6000);
       }, 5000);
     } else {
       console.log('Not enough tears or soil is moist enough.');
