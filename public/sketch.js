@@ -71,7 +71,7 @@ const translations = {
     "tearsAvailable": "larmes disponibles",
     "eightMLneeded": "8mL par jour nécessaires",
     "pressShiftKey": "APPUYEZ SUR ENTRÉE POUR ENVOYER",
-    "soilDryness": "Humidité du sol :",
+    "soilDryness": "Sécheresse du sol :",
     "crying": "en train de pleurer...",
     "attemptingToCry": "essaie de pleurer",
     "helpNeededLine": "*la plante a besoin d’au moins 8mL par jour",
