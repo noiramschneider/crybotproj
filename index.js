@@ -159,7 +159,7 @@ async function waterThePlant() {
           if (tearTotal < 0) tearTotal = 0;
           console.log(`TearTotal after watering: ${tearTotal}`);
           saveTearTotal();
-        }, 6000);
+        }, 12000);
       }, 5000);
     } else {
       console.log('Not enough tears or soil is moist enough.');
