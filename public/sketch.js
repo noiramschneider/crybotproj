@@ -537,7 +537,7 @@ function displayRegularScreen() {
   }
   fill(255);
   textSize(22);
-  text(`${t("soilDryness")} ${currentDryness}%`, 635, 465);
+  text(`${t("soilDryness")} ${currentDryness}%`, 700, 465);
  /* if (actualScore < 0) {
     fill(clicktextcolor);
     textSize(25);
