@@ -590,7 +590,7 @@ function displayHelpmodescreen() {
   text(t("helpMe"), 60, 430);
   fill(255);
   textSize(22);
-  text(`${t("soilDryness")} ${currentDryness}%`, 650, 465);
+  text(`${t("soilDryness")} ${currentDryness}%`, 700, 465);
 
     if (txt.value().trim() !== "") {
   fill(clicktextcolor);
