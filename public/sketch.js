@@ -294,7 +294,7 @@ function keyPressed() {
     document.getElementById('txt').style.display = "block";
   }
 
-if (keyCode === 16) {
+/*if (keyCode === 16) {
   // On vérifie qu'un message a été saisi (non vide)
   if (txt.value().trim() !== "") {
     // Si tearEstimate > 0 (donc message triste), on met à jour tearTotal
@@ -312,7 +312,7 @@ if (keyCode === 16) {
     triggerWateringCheck();
   }
   setTimeout(() => txt.elt.focus(), 0);
-}
+}*/
 
 
   if (keyCode === 13) {
