@@ -230,14 +230,25 @@ function setup() {
     setInterval(fetchTearTotalFromBackend, 5000);
   }
 }
+window.addEventListener('keydown', function(e) {
+  // e.keyCode 112 = F1, 113 = F2, etc. 
+  // OU e.key === "F1" (selon le support)
+  
+  // Pour bloquer TOUTES les touches F1 à F12 :
+  if (e.keyCode >= 112 && e.keyCode <= 123) {
+    e.preventDefault();  // Annule le comportement par défaut
+    // e.stopPropagation(); // Si besoin d'empêcher d'autres listeners d'agir
+    console.log("Touche F" + (e.keyCode - 111) + " bloquée");
+  }
+});
 
 // Gestion des événements clavier
 function keyPressed() {
   var txt = select('#txt');
   lastInteractionTime = millis();
-  if (keyCode >= 112 && keyCode <= 123) {
+ /* if (keyCode >= 112 && keyCode <= 123) {
     // En retournant false, p5.js appelle en interne un preventDefault()
-    return false;
+    return false; */
   }
  if (keyCode === 51) {
   currentLanguage = 'en';
