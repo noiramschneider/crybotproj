@@ -241,11 +241,13 @@ function keyPressed() {
   document.getElementById('txt').placeholder = t("placeholder");
   document.getElementById('txt').setAttribute('lang', 'en');  // Ajouté pour l'anglais
   console.log("Language switched to English");
+   return false;
 } else if (keyCode === 52) {
   currentLanguage = 'fr';
   document.getElementById('txt').placeholder = t("placeholder");
   document.getElementById('txt').setAttribute('lang', 'fr');  // Ajouté pour le français
   console.log("Langue changée en français");
+   return false;
 }
 
 
