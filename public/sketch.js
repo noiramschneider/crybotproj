@@ -236,12 +236,12 @@ function keyPressed() {
   var txt = select('#txt');
   lastInteractionTime = millis();
 
- if (keyCode === 216) {
+ if (keyCode === 51) {
   currentLanguage = 'en';
   document.getElementById('txt').placeholder = t("placeholder");
   document.getElementById('txt').setAttribute('lang', 'en');  // Ajouté pour l'anglais
   console.log("Language switched to English");
-} else if (keyCode === 217) {
+} else if (keyCode === 52) {
   currentLanguage = 'fr';
   document.getElementById('txt').placeholder = t("placeholder");
   document.getElementById('txt').setAttribute('lang', 'fr');  // Ajouté pour le français
