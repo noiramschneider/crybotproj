@@ -235,12 +235,14 @@ window.addEventListener('keydown', function(e) {
   // OU e.key === "F1" (selon le support)
   
   // Pour bloquer TOUTES les touches F1 à F12 :
-  if (e.keyCode >= 112 && e.keyCode <= 123) {
-    e.preventDefault();  // Annule le comportement par défaut
-    // e.stopPropagation(); // Si besoin d'empêcher d'autres listeners d'agir
-    console.log("Touche F" + (e.keyCode - 111) + " bloquée");
+window.addEventListener('keydown', function(e) {
+  // If it's between F1–F12 AND NOT F4 because we need it to quit openbox:
+  if (e.keyCode >= 112 && e.keyCode <= 123 && e.keyCode !== 115) {
+    e.preventDefault();  // Prevent default action (like refresh, etc.)
+    console.log("Blocked F" + (e.keyCode - 111));
   }
 });
+
 
 // Gestion des événements clavier
 function keyPressed() {
