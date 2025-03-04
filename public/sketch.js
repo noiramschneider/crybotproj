@@ -248,8 +248,8 @@ function keyPressed() {
   lastInteractionTime = millis();
  /* if (keyCode >= 112 && keyCode <= 123) {
     // En retournant false, p5.js appelle en interne un preventDefault()
-    return false; */
-  }
+    return false; 
+  } */
  if (keyCode === 51) {
   currentLanguage = 'en';
   document.getElementById('txt').placeholder = t("placeholder");
