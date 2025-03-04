@@ -230,10 +230,7 @@ function setup() {
     setInterval(fetchTearTotalFromBackend, 5000);
   }
 }
-window.addEventListener('keydown', function(e) {
-  // e.keyCode 112 = F1, 113 = F2, etc. 
-  // OU e.key === "F1" (selon le support)
-  
+
   // Pour bloquer TOUTES les touches F1 à F12 :
 window.addEventListener('keydown', function(e) {
   // If it's between F1–F12 AND NOT F4 because we need it to quit openbox:
